@@ -4,21 +4,26 @@ import streamlit as st
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "agent"))
 
+# Load secrets into environment variables before any imports that need them
+for key in ("OPENROUTER_KEY", "HF_DATASET_REPO"):
+    if key not in os.environ:
+        val = st.secrets.get(key, "")
+        if val:
+            os.environ[key] = val
+
 st.set_page_config(page_title="AoPS Problem Finder", page_icon="📐", layout="centered")
 
 st.title("📐 AoPS Problem Finder")
-st.caption("Describe a math competition problem and I'll find it in the AoPS dataset.")
+st.caption("Describe a math competition problem and I'll find it in the AoPS dataset (~43k problems).")
 
 
-@st.cache_resource(show_spinner="Loading dataset and agent...")
+@st.cache_resource(show_spinner="Loading dataset and agent (first time may take a minute)...")
 def load_agent():
+    # Eagerly load dataset so it's cached
+    from tools import get_df
+    get_df()
     from agent import build_agent
     return build_agent()
-
-
-def get_api_key() -> str:
-    # Streamlit Cloud secrets take priority, then .env via environment
-    return st.secrets.get("OPENROUTER_KEY", os.environ.get("OPENROUTER_KEY", ""))
 
 
 # Initialize chat history
