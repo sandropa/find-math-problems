@@ -54,6 +54,13 @@ def _get_thread_id(source: str) -> str:
     return m.group(1) if m else ""
 
 
+def _make_link(path: str) -> str:
+    """Turn an AoPS relative path into a full URL."""
+    if isinstance(path, str) and path.startswith('/'):
+        return f"https://artofproblemsolving.com{path}"
+    return str(path) if isinstance(path, str) else ""
+
+
 def _find_all_contests(df: pd.DataFrame, thread_id: str) -> list[dict]:
     """Find all contest entries that share the same AoPS thread."""
     if not thread_id:
@@ -65,7 +72,11 @@ def _find_all_contests(df: pd.DataFrame, thread_id: str) -> list[dict]:
         name = f"{row.get('contest', '?')} — {row.get('name', '?')}"
         if name not in seen:
             seen.add(name)
-            entries.append({"name": name, "source": row.get("source", "")})
+            entries.append({
+                "name": name,
+                "source": row.get("source", ""),
+                "link": row.get("link", ""),
+            })
     return entries
 
 
@@ -125,13 +136,14 @@ def _format_results(results: pd.DataFrame) -> str:
             seen_threads.add(thread_id)
 
         preview = _clean_html(row['problem_html'])[:300]
-        source = row.get('source', '')
-        link = f"https://artofproblemsolving.com{source}" if isinstance(source, str) and source.startswith('/') else source
+        problem_link = _make_link(row.get('source', ''))
+        contest_link = _make_link(row.get('link', ''))
 
         # Find all contests for this problem
         entry = f"[{idx}] {row.get('contest', '?')} — {row.get('name', '?')}\n"
         entry += f"  Preview: {preview}...\n"
-        entry += f"  Link: {link}"
+        entry += f"  Problem: {problem_link}\n"
+        entry += f"  Contest: {contest_link}"
 
         if thread_id:
             all_contests = _find_all_contests(df, thread_id)
@@ -141,8 +153,7 @@ def _format_results(results: pd.DataFrame) -> str:
                 if others:
                     entry += "\n  Also appeared in:"
                     for c in others[:10]:
-                        c_link = f"https://artofproblemsolving.com{c['source']}" if c['source'].startswith('/') else c['source']
-                        entry += f"\n    - {c['name']} ({c_link})"
+                        entry += f"\n    - {c['name']} (problem: {_make_link(c['source'])}, contest: {_make_link(c['link'])})"
 
         out.append(entry)
 
@@ -207,25 +218,25 @@ def get_problem_details(row_index: int) -> str:
 
     row = df.loc[row_index]
     problem_text = _clean_html(row['problem_html'])
-    source = row.get('source', '')
-    link = f"https://artofproblemsolving.com{source}" if isinstance(source, str) and source.startswith('/') else source
+    problem_link = _make_link(row.get('source', ''))
+    contest_link = _make_link(row.get('link', ''))
 
     out = (
         f"Contest: {row.get('contest', '?')}\n"
         f"Name: {row.get('name', '?')}\n"
         f"Category: {row.get('category', '?')}\n"
-        f"Link: {link}\n\n"
+        f"Problem link: {problem_link}\n"
+        f"Contest page: {contest_link}\n\n"
         f"Problem:\n{problem_text}"
     )
 
     # Show all contests that share this AoPS thread
-    thread_id = _get_thread_id(str(source))
+    thread_id = _get_thread_id(str(row.get('source', '')))
     if thread_id:
         all_contests = _find_all_contests(df, thread_id)
         if len(all_contests) > 1:
             out += "\n\nAll contests featuring this problem:"
             for c in all_contests:
-                c_link = f"https://artofproblemsolving.com{c['source']}" if c['source'].startswith('/') else c['source']
-                out += f"\n  - {c['name']} ({c_link})"
+                out += f"\n  - {c['name']} (problem: {_make_link(c['source'])}, contest: {_make_link(c['link'])})"
 
     return out
