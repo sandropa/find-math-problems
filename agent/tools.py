@@ -46,8 +46,31 @@ def _clean_html(html: str) -> str:
     return re.sub(r'\s+', ' ', text).strip()
 
 
-def _search_column(df: pd.DataFrame, column: str, terms: list[str], limit: int = 5) -> pd.DataFrame:
-    """Search a column for rows matching all given terms. Falls back to single-term matches."""
+def _get_thread_id(source: str) -> str:
+    """Extract AoPS thread ID (e.g. 'c6h17316') from a source URL."""
+    if not isinstance(source, str):
+        return ""
+    m = re.search(r'(c\d+h\d+)', source)
+    return m.group(1) if m else ""
+
+
+def _find_all_contests(df: pd.DataFrame, thread_id: str) -> list[dict]:
+    """Find all contest entries that share the same AoPS thread."""
+    if not thread_id:
+        return []
+    mask = df['source'].str.contains(thread_id, regex=False, na=False)
+    entries = []
+    seen = set()
+    for _, row in df[mask].iterrows():
+        name = f"{row.get('contest', '?')} — {row.get('name', '?')}"
+        if name not in seen:
+            seen.add(name)
+            entries.append({"name": name, "source": row.get("source", "")})
+    return entries
+
+
+def _search_column(df: pd.DataFrame, column: str, terms: list[str], limit: int = 20) -> pd.DataFrame:
+    """Search a column for rows matching all given terms. Falls back to pair/single-term matches."""
     mask = pd.Series([True] * len(df))
     for term in terms[:5]:
         try:
@@ -59,7 +82,6 @@ def _search_column(df: pd.DataFrame, column: str, terms: list[str], limit: int =
     results = df[mask].head(limit)
 
     if results.empty:
-        # Fallback: try pairs of terms
         for i in range(len(terms)):
             for j in range(i + 1, len(terms)):
                 pair_mask = pd.Series([True] * len(df))
@@ -73,7 +95,6 @@ def _search_column(df: pd.DataFrame, column: str, terms: list[str], limit: int =
                     return results
 
     if results.empty:
-        # Last resort: any single term
         for term in terms:
             try:
                 results = df[df[column].str.contains(re.escape(term), case=False, regex=True, na=False)].head(limit)
@@ -86,19 +107,43 @@ def _search_column(df: pd.DataFrame, column: str, terms: list[str], limit: int =
 
 
 def _format_results(results: pd.DataFrame) -> str:
+    """Format search results, deduplicating by AoPS thread and showing all contests per problem."""
     if results.empty:
         return "No problems found matching that query."
 
+    df = get_df()
+    seen_threads = set()
     out = []
+
     for idx, row in results.iterrows():
+        thread_id = _get_thread_id(str(row.get('source', '')))
+
+        # Skip if we already showed this thread
+        if thread_id and thread_id in seen_threads:
+            continue
+        if thread_id:
+            seen_threads.add(thread_id)
+
         preview = _clean_html(row['problem_html'])[:300]
         source = row.get('source', '')
         link = f"https://artofproblemsolving.com{source}" if isinstance(source, str) and source.startswith('/') else source
-        out.append(
-            f"[{idx}] {row.get('contest', '?')} — {row.get('name', '?')}\n"
-            f"  Preview: {preview}...\n"
-            f"  Link: {link}"
-        )
+
+        # Find all contests for this problem
+        entry = f"[{idx}] {row.get('contest', '?')} — {row.get('name', '?')}\n"
+        entry += f"  Preview: {preview}...\n"
+        entry += f"  Link: {link}"
+
+        if thread_id:
+            all_contests = _find_all_contests(df, thread_id)
+            if len(all_contests) > 1:
+                others = [c["name"] for c in all_contests if c["name"] != f"{row.get('contest', '?')} — {row.get('name', '?')}"]
+                if others:
+                    entry += f"\n  Also appeared in: {', '.join(others[:10])}"
+
+        out.append(entry)
+
+        if len(out) >= 5:
+            break
 
     return "\n\n".join(out)
 
@@ -140,7 +185,7 @@ def search_by_contest(contest_name: str) -> str:
     """
     df = get_df()
     mask = df['contest'].str.contains(contest_name, case=False, regex=False, na=False)
-    results = df[mask].head(10)
+    results = df[mask].head(20)
     return _format_results(results)
 
 
@@ -149,7 +194,7 @@ def get_problem_details(row_index: int) -> str:
     """Get the full problem statement and AoPS link for a specific row index.
 
     Use the index returned by search_problems. Returns the full problem text,
-    contest info, and AoPS community link.
+    contest info, AoPS community link, and all contests where this problem appeared.
     """
     df = get_df()
 
@@ -161,10 +206,22 @@ def get_problem_details(row_index: int) -> str:
     source = row.get('source', '')
     link = f"https://artofproblemsolving.com{source}" if isinstance(source, str) and source.startswith('/') else source
 
-    return (
+    out = (
         f"Contest: {row.get('contest', '?')}\n"
         f"Name: {row.get('name', '?')}\n"
         f"Category: {row.get('category', '?')}\n"
         f"Link: {link}\n\n"
         f"Problem:\n{problem_text}"
     )
+
+    # Show all contests that share this AoPS thread
+    thread_id = _get_thread_id(str(source))
+    if thread_id:
+        all_contests = _find_all_contests(df, thread_id)
+        if len(all_contests) > 1:
+            out += "\n\nAll contests featuring this problem:"
+            for c in all_contests:
+                c_link = f"https://artofproblemsolving.com{c['source']}" if c['source'].startswith('/') else c['source']
+                out += f"\n  - {c['name']} ({c_link})"
+
+    return out
