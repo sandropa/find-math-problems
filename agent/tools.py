@@ -80,7 +80,7 @@ def _find_all_contests(df: pd.DataFrame, thread_id: str) -> list[dict]:
     return entries
 
 
-def _search_column(df: pd.DataFrame, column: str, terms: list[str], limit: int = 20) -> pd.DataFrame:
+def _search_column(df: pd.DataFrame, column: str, terms: list[str], limit: int = 50) -> pd.DataFrame:
     """Search a column for rows matching all given terms. Falls back to pair/single-term matches."""
     mask = pd.Series([True] * len(df))
     for term in terms[:5]:
@@ -117,35 +117,57 @@ def _search_column(df: pd.DataFrame, column: str, terms: list[str], limit: int =
     return results
 
 
+PRIORITY_CONTESTS = [
+    "IMO Shortlist", "IMO", "IMO Longlists",
+    "USAMO", "Putnam", "APMO", "EGMO",
+    "BMO", "JBMO", "Pan African",
+]
+
+
+def _contest_priority(contest: str) -> int:
+    """Lower number = higher priority. IMO/major contests come first."""
+    contest_lower = contest.lower()
+    for i, prefix in enumerate(PRIORITY_CONTESTS):
+        if prefix.lower() in contest_lower:
+            return i
+    return 100
+
+
 def _format_results(results: pd.DataFrame) -> str:
-    """Format search results, deduplicating by AoPS thread and showing all contests per problem."""
+    """Format search results, deduplicating by AoPS thread and showing all contests per problem.
+    Prioritizes prestigious competitions (IMO, USAMO, etc.) over national TSTs."""
     if results.empty:
         return "No problems found matching that query."
 
     df = get_df()
-    seen_threads = set()
-    out = []
 
+    # Collect unique threads with their best (highest priority) contest
+    thread_entries = {}  # thread_id -> (priority, idx, row)
     for idx, row in results.iterrows():
         thread_id = _get_thread_id(str(row.get('source', '')))
+        if not thread_id:
+            thread_id = f"no_thread_{idx}"
 
-        # Skip if we already showed this thread
-        if thread_id and thread_id in seen_threads:
-            continue
-        if thread_id:
-            seen_threads.add(thread_id)
+        priority = _contest_priority(str(row.get('contest', '')))
+        if thread_id not in thread_entries or priority < thread_entries[thread_id][0]:
+            thread_entries[thread_id] = (priority, idx, row)
 
+    # Sort by priority (IMO first)
+    sorted_entries = sorted(thread_entries.values(), key=lambda x: x[0])
+
+    out = []
+    for priority, idx, row in sorted_entries[:5]:
+        thread_id = _get_thread_id(str(row.get('source', '')))
         preview = _clean_html(row['problem_html'])[:300]
         problem_link = _make_link(row.get('source', ''))
         contest_link = _make_link(row.get('link', ''))
 
-        # Find all contests for this problem
         entry = f"[{idx}] {row.get('contest', '?')} — {row.get('name', '?')}\n"
         entry += f"  Preview: {preview}...\n"
         entry += f"  Problem: {problem_link}\n"
         entry += f"  Contest: {contest_link}"
 
-        if thread_id:
+        if thread_id and not thread_id.startswith("no_thread"):
             all_contests = _find_all_contests(df, thread_id)
             if len(all_contests) > 1:
                 current_name = f"{row.get('contest', '?')} — {row.get('name', '?')}"
@@ -156,9 +178,6 @@ def _format_results(results: pd.DataFrame) -> str:
                         entry += f"\n    - {c['name']} (problem: {_make_link(c['source'])}, contest: {_make_link(c['link'])})"
 
         out.append(entry)
-
-        if len(out) >= 5:
-            break
 
     return "\n\n".join(out)
 
