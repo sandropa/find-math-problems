@@ -136,9 +136,13 @@ def _format_results(results: pd.DataFrame) -> str:
         if thread_id:
             all_contests = _find_all_contests(df, thread_id)
             if len(all_contests) > 1:
-                others = [c["name"] for c in all_contests if c["name"] != f"{row.get('contest', '?')} — {row.get('name', '?')}"]
+                current_name = f"{row.get('contest', '?')} — {row.get('name', '?')}"
+                others = [c for c in all_contests if c["name"] != current_name]
                 if others:
-                    entry += f"\n  Also appeared in: {', '.join(others[:10])}"
+                    entry += "\n  Also appeared in:"
+                    for c in others[:10]:
+                        c_link = f"https://artofproblemsolving.com{c['source']}" if c['source'].startswith('/') else c['source']
+                        entry += f"\n    - {c['name']} ({c_link})"
 
         out.append(entry)
 
