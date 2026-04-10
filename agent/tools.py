@@ -46,50 +46,52 @@ def _clean_html(html: str) -> str:
     return re.sub(r'\s+', ' ', text).strip()
 
 
-@tool
-def search_problems(query: str) -> str:
-    """Search the AoPS math competition dataset for problems matching a query.
-
-    The query should contain key mathematical terms, numbers, or LaTeX expressions
-    from the problem. Returns up to 5 matching problems with their index, contest,
-    name, and a short preview.
-
-    Example queries:
-    - "minimize a/x where y^2 - 1 = a^2(x^2 - 1)"
-    - "100x100 board nice cell token"
-    - "system x_1 + 2x_2 harmonic"
-    """
-    df = get_df()
-
-    terms = [t.strip() for t in re.split(r'\s+', query) if len(t.strip()) > 2]
-
+def _search_column(df: pd.DataFrame, column: str, terms: list[str], limit: int = 5) -> pd.DataFrame:
+    """Search a column for rows matching all given terms. Falls back to single-term matches."""
     mask = pd.Series([True] * len(df))
-    for term in terms[:4]:
-        escaped = re.escape(term)
+    for term in terms[:5]:
         try:
-            term_mask = df['problem_html'].str.contains(escaped, case=False, regex=True, na=False)
+            term_mask = df[column].str.contains(re.escape(term), case=False, regex=True, na=False)
         except Exception:
-            term_mask = df['problem_html'].str.contains(term, case=False, regex=False, na=False)
+            term_mask = df[column].str.contains(term, case=False, regex=False, na=False)
         mask = mask & term_mask
 
-    results = df[mask].head(5)
+    results = df[mask].head(limit)
 
     if results.empty:
+        # Fallback: try pairs of terms
+        for i in range(len(terms)):
+            for j in range(i + 1, len(terms)):
+                pair_mask = pd.Series([True] * len(df))
+                for t in [terms[i], terms[j]]:
+                    try:
+                        pair_mask = pair_mask & df[column].str.contains(re.escape(t), case=False, regex=True, na=False)
+                    except Exception:
+                        pair_mask = pair_mask & df[column].str.contains(t, case=False, regex=False, na=False)
+                results = df[pair_mask].head(limit)
+                if not results.empty:
+                    return results
+
+    if results.empty:
+        # Last resort: any single term
         for term in terms:
-            escaped = re.escape(term)
             try:
-                results = df[df['problem_html'].str.contains(escaped, case=False, regex=True, na=False)].head(5)
+                results = df[df[column].str.contains(re.escape(term), case=False, regex=True, na=False)].head(limit)
             except Exception:
-                results = df[df['problem_html'].str.contains(term, case=False, regex=False, na=False)].head(5)
+                results = df[df[column].str.contains(term, case=False, regex=False, na=False)].head(limit)
             if not results.empty:
                 break
 
+    return results
+
+
+def _format_results(results: pd.DataFrame) -> str:
     if results.empty:
         return "No problems found matching that query."
 
     out = []
     for idx, row in results.iterrows():
-        preview = _clean_html(row['problem_html'])[:200]
+        preview = _clean_html(row['problem_html'])[:300]
         source = row.get('source', '')
         link = f"https://artofproblemsolving.com{source}" if isinstance(source, str) and source.startswith('/') else source
         out.append(
@@ -99,6 +101,47 @@ def search_problems(query: str) -> str:
         )
 
     return "\n\n".join(out)
+
+
+@tool
+def search_problems(terms: list[str]) -> str:
+    """Search the AoPS dataset for math competition problems.
+
+    Pass a list of search terms. Each term is matched against the problem's HTML content
+    (which includes LaTeX in alt= attributes of img tags).
+
+    IMPORTANT: The dataset stores math as LaTeX in HTML. Effective search terms are:
+    - LaTeX expressions: "ac=bd", "\\frac{a}{b}", "x^2", "x_1", "\\geq"
+    - English math words: "triangle", "circle", "prime", "integer", "maximum"
+    - Numbers that appear in the problem: "100", "2024", "4"
+    - Contest names: "IMO", "USAMO", "Putnam"
+
+    DO NOT search with words in other languages — the dataset is in English/LaTeX.
+
+    Examples:
+        terms=["ac=bd", "\\frac{a}{b}", "\\frac{c}{d}"]
+        terms=["100", "nice", "cell", "token"]
+        terms=["y^2-1", "a^2", "x^2-1", "minimize"]
+    """
+    df = get_df()
+
+    if not terms:
+        return "Please provide at least one search term."
+
+    results = _search_column(df, 'problem_html', terms)
+    return _format_results(results)
+
+
+@tool
+def search_by_contest(contest_name: str) -> str:
+    """Search for problems by contest name.
+
+    Examples: "CentroAmerican", "IMO Shortlist", "All Russian", "JBMO"
+    """
+    df = get_df()
+    mask = df['contest'].str.contains(contest_name, case=False, regex=False, na=False)
+    results = df[mask].head(10)
+    return _format_results(results)
 
 
 @tool
