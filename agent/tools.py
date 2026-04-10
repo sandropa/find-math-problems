@@ -133,9 +133,67 @@ def _contest_priority(contest: str) -> int:
     return 100
 
 
+def _normalize_latex(text: str) -> str:
+    """Strip LaTeX delimiters, HTML entities, and whitespace for fingerprinting."""
+    text = re.sub(r'&lt;', '<', text)
+    text = re.sub(r'&gt;', '>', text)
+    text = re.sub(r'&amp;', '&', text)
+    # Remove LaTeX display delimiters
+    text = re.sub(r'\$\$|\\\[|\\\]|\$', '', text)
+    text = re.sub(r'\s+', '', text)
+    return text
+
+
+def _find_similar_entries(df: pd.DataFrame, problem_html: str, exclude_threads: set) -> list[dict]:
+    """Find entries in other threads that contain the same problem, by extracting
+    a distinctive LaTeX expression and searching for it across the full dataset."""
+    alts = re.findall(r'alt="([^"]+)"', str(problem_html))
+    if not alts:
+        return []
+    # Pick the longest alt text (most distinctive formula)
+    fingerprint = max(alts, key=len)
+    clean = _normalize_latex(fingerprint)
+    if len(clean) < 10:
+        return []
+
+    # Extract meaningful chunks (skip very short ones), searching the middle
+    # to avoid delimiter differences at the start/end
+    start = min(4, len(clean) // 4)
+    chunks = []
+    for i in range(start, len(clean) - 5, 6):
+        chunk = clean[i:i+6]
+        if len(chunk) >= 6:
+            chunks.append(chunk)
+    if not chunks:
+        return []
+
+    # Use 2-3 chunks to find similar problems
+    mask = pd.Series([True] * len(df))
+    for chunk in chunks[:3]:
+        escaped = re.escape(chunk)
+        try:
+            mask = mask & df['problem_html'].str.contains(escaped, case=False, regex=True, na=False)
+        except Exception:
+            mask = mask & df['problem_html'].str.contains(chunk, case=False, regex=False, na=False)
+
+    similar = []
+    seen = set()
+    for _, row in df[mask].iterrows():
+        tid = _get_thread_id(str(row.get('source', '')))
+        if tid in exclude_threads or tid in seen:
+            continue
+        if tid:
+            seen.add(tid)
+        similar.append(row)
+        if len(similar) >= 10:
+            break
+    return similar
+
+
 def _format_results(results: pd.DataFrame) -> str:
     """Format search results, deduplicating by AoPS thread and showing all contests per problem.
-    Prioritizes prestigious competitions (IMO, USAMO, etc.) over national TSTs."""
+    Prioritizes prestigious competitions (IMO, USAMO, etc.) over national TSTs.
+    Also searches for the same problem in other AoPS threads."""
     if results.empty:
         return "No problems found matching that query."
 
@@ -151,6 +209,30 @@ def _format_results(results: pd.DataFrame) -> str:
         priority = _contest_priority(str(row.get('contest', '')))
         if thread_id not in thread_entries or priority < thread_entries[thread_id][0]:
             thread_entries[thread_id] = (priority, idx, row)
+
+    # For each unique thread, search for the same problem in other threads
+    for thread_id, (priority, idx, row) in list(thread_entries.items()):
+        if thread_id.startswith("no_thread"):
+            continue
+        similar = _find_similar_entries(df, row['problem_html'], set(thread_entries.keys()))
+        for sim_row in similar:
+            sim_tid = _get_thread_id(str(sim_row.get('source', '')))
+            if sim_tid and sim_tid not in thread_entries:
+                # Find the best contest in this thread (might be IMO even if
+                # the first entry we found is a TST)
+                all_in_thread = _find_all_contests(df, sim_tid)
+                best_priority = min(_contest_priority(c["name"]) for c in all_in_thread) if all_in_thread else 100
+                # Use the highest-priority row from this thread
+                best_row = sim_row
+                for c in all_in_thread:
+                    if _contest_priority(c["name"]) == best_priority:
+                        mask = df['source'].str.contains(sim_tid, regex=False, na=False) & \
+                               (df['contest'] + ' — ' + df['name'] == c["name"])
+                        matches = df[mask]
+                        if not matches.empty:
+                            best_row = matches.iloc[0]
+                            break
+                thread_entries[sim_tid] = (best_priority, best_row.name, best_row)
 
     # Sort by priority (IMO first)
     sorted_entries = sorted(thread_entries.values(), key=lambda x: x[0])
