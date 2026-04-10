@@ -1,55 +1,66 @@
-# Find Math Problems
+# AoPS Problem Finder
 
-Search and analyze math competition problems from AoPS and other sources.
+A conversational search tool for math competition problems from [Art of Problem Solving](https://artofproblemsolving.com). Describe a problem in any language and the agent finds it in the dataset with a direct AoPS link.
 
-## Datasets
+## Dataset
 
-### AoPS Dataset
-43,218 problems scraped from Art of Problem Solving, stored in `dataset/aops.csv`.
+43,218 problems scraped from AoPS, hosted on [Hugging Face](https://huggingface.co/datasets/sandropa/aops-problems).
 
 Columns: `category`, `contest`, `link`, `name`, `source`, `problem`, `problem_html`, `solution_1`–`solution_5`, `which`
 
-To download the dataset programmatically:
+## Local development
 
-```python
-import kagglehub
-
-path = kagglehub.dataset_download("imbishal7/math-olympiad-problems-and-solutions-aops")
-print("Path to dataset files:", path)
-```
-
-### Math Problems Dataset
-100,000 problems with solutions, stored in `dataset/math_problems.parquet`.
-
-To download:
-
-```python
-import kagglehub
-
-path = kagglehub.dataset_download("YOUR_DATASET_SLUG_HERE")
-print("Path to dataset files:", path)
-```
-
-## Setup
-
-### 1. Create conda environment
+### 1. Create environment
 
 ```bash
 conda create -n math_problems python=3.11
 conda activate math_problems
-pip install pandas pyarrow kagglehub jupyter
+pip install -r requirements.txt
 ```
 
-### 2. Configure Kaggle API key
+### 2. Configure credentials
 
-Required for downloading datasets via `kagglehub`.
+Create a `.env` file:
 
-1. Go to [kaggle.com](https://www.kaggle.com) → Account → **Create New Token**
-2. Move the downloaded `kaggle.json` to `~/.kaggle/kaggle.json`
-3. Set permissions: `chmod 600 ~/.kaggle/kaggle.json`
+```
+OPENROUTER_KEY=sk-or-...
+```
 
-Alternatively, set environment variables:
+### 3. Download the dataset
+
 ```bash
-export KAGGLE_USERNAME=your_username
-export KAGGLE_KEY=your_api_key
+python download_data.py
 ```
+
+This requires `KAGGLE_USERNAME` and `KAGGLE_KEY` in your `.env`. Get them from [kaggle.com](https://www.kaggle.com) → Account → **Create New Token**.
+
+Alternatively, the app will auto-download from Hugging Face on first run if the local file is missing.
+
+### 4. Run the app
+
+```bash
+streamlit run app.py
+```
+
+Or test the agent directly from the terminal:
+
+```bash
+python agent/agent.py
+```
+
+## Deployment
+
+The app is deployed on [Streamlit Community Cloud](https://streamlit.io/cloud). Required secrets:
+
+```toml
+OPENROUTER_KEY = "sk-or-..."
+HF_DATASET_REPO = "sandropa/aops-problems"
+```
+
+## Architecture
+
+- `agent/tools.py` — pandas search tools over `problem_html` column
+- `agent/agent.py` — LangChain agent using OpenRouter (`anthropic/claude-haiku-4-5`)
+- `app.py` — Streamlit chat UI, dataset cached in memory per session
+- `download_data.py` — one-time Kaggle download
+- `upload_to_hf.py` — one-time Hugging Face upload

@@ -1,2 +1,5 @@
-dataset
+dataset/
 .env
+.streamlit/secrets.toml
+*.zip
+__pycache__/
