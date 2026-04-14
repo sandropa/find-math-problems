@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import time
 import streamlit as st
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "agent"))
@@ -22,6 +23,44 @@ EXAMPLE_PROBLEM = (
     "(not necessarily distinct), the number (i+j)/gcd(i,j) also belongs to S. "
     "Find all such sets S."
 )
+
+# Pre-recorded agent stream for the example problem (avoids API call).
+# Delays captured from a real agent run.
+EXAMPLE_STEPS = [
+    {"type": "thinking", "text": "I'll search for this problem in the AoPS dataset.", "delay": 5.0},
+    {"type": "search", "terms": ["\\frac{i+j}{\\gcd(i,j)}", "finite nonempty set", "positive integers"], "delay": 0.1},
+    {"type": "search", "terms": ["(i+j)/gcd", "belongs to S", "finite set"], "delay": 0.05},
+    {"type": "search", "terms": ["gcd(i,j)", "i+j", "closure property"], "delay": 0.05},
+    {"type": "result", "text": "3 result(s)", "delay": 1.0},
+    {"type": "result", "text": "1 result(s)", "delay": 0.05},
+    {"type": "result", "text": "5 result(s)", "delay": 0.05},
+    {"type": "thinking", "text": "Perfect! I found the problem. Let me get the full details:", "delay": 4.7},
+    {"type": "details", "row_index": 2942, "delay": 0},
+    {"type": "result", "text": "APMO", "delay": 5.0},
+]
+EXAMPLE_RESPONSE = (
+    "## Problem Found\n\n"
+    "This problem appeared in:\n\n"
+    "**[2004 APMO](https://artofproblemsolving.com/community/c4121_2004_apmo)**\n"
+    "- Problem link: https://artofproblemsolving.com/community/c6h82828p474988\n\n"
+    "The problem asks to determine all finite nonempty sets $S$ of positive integers "
+    "such that for all $i, j \\in S$, the quantity $\\frac{i+j}{\\gcd(i,j)}$ also belongs to $S$."
+)
+
+
+def replay_example(status_container):
+    """Replay pre-recorded agent steps with realistic timing."""
+    for step in EXAMPLE_STEPS:
+        time.sleep(step.get("delay", 0.3))
+        if step["type"] == "thinking":
+            status_container.caption(step["text"])
+        elif step["type"] == "search":
+            status_container.markdown("🔍 " + ", ".join(f"`{t}`" for t in step["terms"]))
+        elif step["type"] == "details":
+            status_container.markdown(f"📋 Reading problem **#{step['row_index']}**")
+        elif step["type"] == "result":
+            status_container.caption(f"→ {step['text']}")
+    return EXAMPLE_RESPONSE
 
 @st.cache_resource(show_spinner="Loading dataset and agent (first time may take a minute)...")
 def load_agent():
@@ -75,45 +114,46 @@ if prompt:
 
     with st.chat_message("assistant"):
         response = None
+        is_example = prompt == EXAMPLE_PROBLEM and len(st.session_state.messages) == 1
+
         try:
-            agent = load_agent()
             with st.status("Searching...", expanded=True) as status:
-                for chunk in agent.stream({"messages": [{"role": "user", "content": prompt}]}):
-                    if "model" in chunk:
-                        msg = chunk["model"]["messages"][-1]
-                        tool_calls = getattr(msg, "tool_calls", None)
-                        if tool_calls:
-                            # Agent is calling tools — show what it's thinking and doing
-                            if msg.content:
-                                st.caption(msg.content)
-                            for tc in tool_calls:
-                                name = tc["name"]
-                                args = tc["args"]
-                                if name == "search_problems":
-                                    terms = args.get("terms", [])
-                                    st.markdown("🔍 " + ", ".join(f"`{t}`" for t in terms))
-                                elif name == "search_by_contest":
-                                    st.markdown(f"🏆 Contest: `{args.get('contest_name', '')}`")
-                                elif name == "get_problem_details":
-                                    st.markdown(f"📋 Reading problem **#{args.get('row_index', '')}**")
-                        elif msg.content:
-                            # Final response
-                            response = msg.content
-                    elif "tools" in chunk:
-                        msg = chunk["tools"]["messages"][-1]
-                        content = msg.content if isinstance(msg.content, str) else str(msg.content)
-                        if "No problems found" in content:
-                            st.caption("→ No matches")
-                        else:
-                            # Count result entries like [12345]
-                            matches = re.findall(r"^\[(\d+)\] (.+)$", content, re.MULTILINE)
-                            if matches:
-                                st.caption(f"→ {len(matches)} result(s)")
-                            elif content.startswith("Contest:"):
-                                # get_problem_details response — extract contest name
-                                m = re.match(r"Contest:\s*(.+)", content)
-                                if m:
-                                    st.caption(f"→ {m.group(1).strip()}")
+                if is_example:
+                    response = replay_example(status)
+                else:
+                    agent = load_agent()
+                    for chunk in agent.stream({"messages": [{"role": "user", "content": prompt}]}):
+                        if "model" in chunk:
+                            msg = chunk["model"]["messages"][-1]
+                            tool_calls = getattr(msg, "tool_calls", None)
+                            if tool_calls:
+                                if msg.content:
+                                    st.caption(msg.content)
+                                for tc in tool_calls:
+                                    name = tc["name"]
+                                    args = tc["args"]
+                                    if name == "search_problems":
+                                        terms = args.get("terms", [])
+                                        st.markdown("🔍 " + ", ".join(f"`{t}`" for t in terms))
+                                    elif name == "search_by_contest":
+                                        st.markdown(f"🏆 Contest: `{args.get('contest_name', '')}`")
+                                    elif name == "get_problem_details":
+                                        st.markdown(f"📋 Reading problem **#{args.get('row_index', '')}**")
+                            elif msg.content:
+                                response = msg.content
+                        elif "tools" in chunk:
+                            msg = chunk["tools"]["messages"][-1]
+                            content = msg.content if isinstance(msg.content, str) else str(msg.content)
+                            if "No problems found" in content:
+                                st.caption("→ No matches")
+                            else:
+                                matches = re.findall(r"^\[(\d+)\] (.+)$", content, re.MULTILINE)
+                                if matches:
+                                    st.caption(f"→ {len(matches)} result(s)")
+                                elif content.startswith("Contest:"):
+                                    m = re.match(r"Contest:\s*(.+)", content)
+                                    if m:
+                                        st.caption(f"→ {m.group(1).strip()}")
                 status.update(label="Search complete", state="complete", expanded=False)
         except Exception as e:
             if "402" in str(e):
