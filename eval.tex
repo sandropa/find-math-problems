@@ -1,0 +1,162 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage[croatian]{babel}
+
+\title{Benchmark for finding math problems}
+\author{Sandro}
+\date{April 2026}
+
+\begin{document}
+
+\maketitle
+
+\section{A}
+
+\begin{enumerate}
+    \item Pokazati da sistem jednad\v{z}bi
+    \[
+    2ab = 6(a+b) - 13
+    \]
+    \[
+    a^2 + b^2 = 4
+    \]
+    nema rje\v{s}enja u skupu realnih brojeva.
+
+    \item Ako za realne brojeve $a, b, c$ vrijedi $a^2 + b^2 + c^2 = 2$, dokazati da je $ab + ac - bc \le 1$.
+
+    \item Neka su $a, b, c$ realni brojevi takvi da zbir nikoja dva nije jednak 1. Dokazati da je nemogu\'ce da sva tri broja $\dfrac{ab}{a+b-1}, \dfrac{bc}{b+c-1}, \dfrac{ca}{c+a-1}$ pripadaju intervalu $(0,1)$.
+
+    \item Rije\v{s}iti u skupu realnih brojeva jednad\v{z}bu
+    \[
+    x\lfloor x \rfloor + \{x\} = 2018,
+    \]
+    pri \v{c}emu $\lfloor z \rfloor$ ozna\v{c}ava najve\'ci cijeli broj koji nije ve\'ci od $z$, a $\{z\}$ je razlomljeni dio od $z$, tj.\ $\{z\} = z - \lfloor z \rfloor$ (npr.\ $\lfloor 3{,}6 \rfloor = 3$ i $\{3{,}6\} = 0{,}6$, a $\lfloor -3{,}6 \rfloor = -4$ i $\{-3{,}6\} = 0{,}4$).
+
+    \item Na\'ci sve parove $(a, b)$ nenegativnih cijelih brojeva koji zadovoljavaju jednakost:
+    \[
+    a + 2b - b^2 = \sqrt{2a + a^2 + |2a + 1 - 2b|}.
+    \]
+
+    \item Neka su $a, b, c$ pozitivni realni brojevi takvi da je $a^2 + b^2 + c^2 = 48$. Dokazati nejednakost
+    \[
+    ac\sqrt{2b^3 + 16} + ba\sqrt{2c^3 + 16} + cb\sqrt{2a^3 + 16} \le 24^2.
+    \]
+    Kada vrijedi jednakost?
+
+    \item Neka su $a, b, c$ pozitivni realni brojevi takvi da je $ab + bc + ca = 3$. Dokazati da vrijedi nejednakost:
+    \[
+    \frac{1}{1 + a^2(b+c)} + \frac{1}{1 + b^2(a+c)} + \frac{1}{1 + c^2(a+b)} \le \frac{a+b+c}{3abc}.
+    \]
+
+    \item Na\'ci sve parove pozitivnih realnih brojeva $a, b$ takvih da vrijedi $(1+a)(8+b)(a+b) = 27ab$.
+
+    \item Neka je $n > 1$ prirodan broj a $a_1, a_2, \ldots, a_n$ cijeli brojevi, takvi da va\v{z}i
+    \[
+    a_1^2 + a_2^2 + \cdots + a_n^2 + n^3 \le (2n-1)(a_1 + a_2 + \cdots + a_n) + n^2.
+    \]
+    Dokazati da su svi $a_i$ nenegativni i da $a_1 + a_2 + \cdots + a_n + n + 1$ nije potpun kvadrat.
+
+    \item Neka je $a_0 < a_1 < a_2 < \cdots$ beskona\v{c}ni niz prirodnih brojeva. Dokazati da postoji jedinstven prirodan broj $n$ takav da je
+    \[
+    a_n < \frac{a_0 + a_1 + a_2 + \cdots + a_n}{n} \le a_{n+1}.
+    \]
+\end{enumerate}
+
+\section{N}
+
+\begin{enumerate}
+    \item Dokazati da su svi brojevi oblika $10017, 100117, 1001117, \ldots$ djeljivi sa 53.
+
+    \item Neka je $n$ prirodan broj ve\'ci od 1. Dokazati da se broj $9^n$ mo\v{z}e prikazati kao zbir kvadrata tri razli\v{c}ita prirodna broja.
+
+    \item Odrediti najve\'ci prirodan broj \v{c}ije su sve cifre neparne, zbir cifara mu je 2015 i djeljiv je sa 7.
+
+    \item Na\'ci sve trojke $(x, y, p)$, gdje su $x$ i $y$ cijeli brojevi a $p$ prost broj takvih da je $x^2 + 3xy + p^2y^2 = 12p$.
+
+    \item Neka su $x, y, z$ relativno prosti prirodni brojevi (dakle vrijedi $\text{NZD}(x, y, z) = 1$, nisu nu\v{z}no po parovima relativno prosti). Ako vrijedi
+    \[
+    (y^2 - x^2) - (z^2 - y^2) = ((y - x) - (z - y))^2
+    \]
+    dokazati da su $x$ i $z$ potpuni kvadrati.
+
+    \item Na\'ci sve prirodne brojeve $m$ i $n$ i sve proste brojeve $p \ge 5$ takve da je $m(4m^2 + m + 12) = 3(p^n - 1)$.
+
+    \item Primijetimo da brojevi $2, -3$ i $5$ imaju osobinu da je razlika bilo koja dva broja sadr\v{z}ilac tre\'ceg broja. Neka razli\v{c}iti cijeli brojevi $a, b, c$ imaju istu osobinu.
+    \begin{enumerate}
+        \item[a)] Dokazati da ne mogu svi biti pozitivni.
+        \item[b)] Pretpostavimo da je $\text{NZD}(a, b, c) = 1$. Dokazati da tada jedan od ova tri broja pripada skupu $\{1, 2, -1, -2\}$.
+    \end{enumerate}
+
+    \item Odredi sve prirodne brojeve $(x, y, z)$ takve da je
+    \[
+    (x+y)^2 - z^2 - 3x - y = 1.
+    \]
+
+    \item Dat je niz sa prvim \v{c}lanom koji je prirodan broj, takav da je svaki njegov \v{c}lan (osim prvog) jednak zbiru prethodnog \v{c}lana sa brojem koji se dobije kada tom prethodnom \v{c}lanu obrnemo cifre (Ako je prvi \v{c}lan 123, drugi \v{c}lan \'ce biti $123 + 321 = 444$, ako je prvi \v{c}lan 150, drugi je $150 + 51 = 201$). Dokazati da sedmi \v{c}lan tog niza nije prost.
+
+    \item Za prirodan broj $n$ ka\v{z}emo da je \v{s}a\v{s}av ako i samo ako postoje prirodni brojevi $a > 1$ i $b > 1$ takvi da je $n = a^b + b$. Da li postoji 2019 uzastopnih prirodnih brojeva me\dj u kojima je ta\v{c}no 2017 \v{s}a\v{s}vih brojeva?
+\end{enumerate}
+
+\section{G}
+
+\begin{enumerate}
+    \item U o\v{s}trouglom trouglu $ABC$, ta\v{c}ke $D, E, F$ su podno\v{z}ja visina iz vrhova $A, B, C$, redom. Ta\v{c}ke $P$ i $Q$ su projekcije ta\v{c}ke $F$ na $AC$ i $BC$, redom. Dokazati da prava $PQ$ polovi du\v{z}i $DF$ i $EF$.
+
+    \item Kru\v{z}nice $k_1$ i $k_2$ s polupre\v{c}nicima $r_1$ i $r_2$ ($r_1 < r_2$) dodiruju se iznutra u ta\v{c}ki $P$. Neka tangenta na $k_1$ koja je paralelna pravoj koja prolazi kroz centre ovih kru\v{z}nica dodiruje $k_1$ u $R$, a sije\v{c}e $k_2$ u $M$ i $N$. Dokazati da je $PR$ simetrala ugla $\angle MPN$.
+
+    \item Neka je ta\v{c}ka $M$ proizvoljna ta\v{c}ka simetrale ugla $\angle BAC$ trougla $ABC$ koja se nalazi u trouglu. Prava $CM$ sije\v{c}e krug opisan oko $ABC$ ponovo u $P$. Krug koji dodiruje pravu $CM$ u $M$ i prolazi kroz $A$ sije\v{c}e $AB$ ponovo u $Q$ i krug opisan oko $ABC$ ponovo u $R$. Dokazati da su ta\v{c}ke $P, Q, R$ kolinearne.
+
+    \item U o\v{s}trouglom trouglu $ABC$ ($AC > BC$) ta\v{c}ke $D$ i $E$ su podno\v{z}ja visina iz $A$ i $B$, redom. Pri tome vrijedi $AB = 2DE$. Ozna\v{c}imo centar opisane i centar upisane kru\v{z}nice trougla redom sa $O$ i $I$. Na\'ci $\angle AIO$.
+
+    \item Neka je $ABCD$ konveksan \v{c}etverougao, a $M$ i $N$ sredine stranica $AD$ i $BC$ redom. Pretpostavimo da je \v{c}etverougao $ABNM$ tetivan i da je $AB$ tangenta na krug opisan oko trougla $BMC$. Dokazati da je $AB$ tangenta i na krug opisan oko trougla $AND$.
+
+    \item Dat je trougao $ABC$. Prava simetri\v{c}na te\v{z}i\v{s}noj du\v{z}i iz $A$ u odnosu na simetralu ugla $\angle BAC$ sije\v{c}e krug trougla $ABC$ u $K$. Ako je $L$ sredi\v{s}te du\v{z}i $AK$, dokazati da je $\angle BLC = 2\angle BAC$.
+
+    \item Neka je $H$ ortocentar o\v{s}trouglog trougla $ABC$, a $M$ sredina stranice $BC$. Ako su $D$ i $E$ podno\v{z}ja normala iz ta\v{c}ke $H$ na simetralu unutra\v{s}njeg i vanjskog ugla kod vrha $A$, dokazati da su ta\v{c}ke $M$, $D$ i $E$ kolinearne.
+
+    \item Neka je $P$ ta\v{c}ka na kru\v{z}nici opisanoj oko trougla $ABC$ na luku $\widehat{BC}$ na kojem nije ta\v{c}ka $A$. Neka se prave $AB$ i $CP$ sijeku u ta\v{c}ki $E$, a prave $AC$ i $BP$ sijeku u ta\v{c}ki $F$. Ako simetrala stranice $\overline{AB}$ sije\v{c}e $\overline{AC}$ u ta\v{c}ki $K$, a simetrala stranice $\overline{AC}$ sije\v{c}e $\overline{AB}$ u ta\v{c}ki $J$, dokazati da je
+    \[
+    \left(\frac{|CE|}{|BF|}\right)^2 = \frac{|AJ| \cdot |JE|}{|AK| \cdot |KF|}.
+    \]
+
+    \item Neka je $AK$ visina trougla $ABC$, i neka upisana kru\v{z}nica trougla dodiruje stranice $BC, CA, AB$ redom u ta\v{c}kama $D, E, F$. Neka je $M$ ta\v{c}ka na du\v{z}i $AK$ takva da je $AM = AE$. Ako su $L$ i $N$ centri upisanih kru\v{z}nica u trouglove $ABK$ i $ACK$, redom, dokazati da je \v{c}etverougao $DLMN$ kvadrat.
+
+    \item Neka su $BB_1$ i $CC_1$ visine trougla $\triangle ABC$, a $AD$ pre\v{c}nik opisane kru\v{z}nice tog trougla. Prave $BB_1$ i $DC_1$ sijeku se u ta\v{c}ki $E$, a prave $CC_1$ i $DB_1$ u $F$. Dokazati da je $\angle CAE = \angle BAF$.
+\end{enumerate}
+
+\section{C}
+
+\begin{enumerate}
+    \item Data je kvadratna jednad\v{c}ina $ax^2 + bx + c = 0$. Igra\v{c}i $A$ i $B$ igraju sljede\'cu igru: naizmjeni\v{c}no upisuju koeficijente ove kvadratne jedna\v{c}ine (dakle, igra\v{c} $A$ \'ce upisati dva koeficijenta, igra\v{c} $B$ jedan). Koeficijenti smiju biti svi realni brojevi osim 0. Igra\v{c} $A$ je pobijedio ukoliko su rje\v{s}enja ove jednad\v{c}ine realna i suprotnog predznaka. U svim ostalim slu\v{c}ajevima je pobijedio igra\v{c} $B$. Koji igra\v{c} ima pobjedni\v{c}ku strategiju?
+
+    \item U\v{c}enici su postrojeni u dva reda, tako da ispred svakog u\v{c}enika stoji u\v{c}enica koja je ni\v{z}a rastom od njega. Ako u\v{c}enike postrojimo po veli\v{c}ini i ispred njih po veli\v{c}ini postrojimo u\v{c}enice, dokazati da \'ce opet ispred svakog u\v{c}enika biti u\v{c}enica koja je ni\v{z}a rastom od njega.
+
+    \item Neka je $S$ kona\v{c}an neprazan skup prirodnih brojeva, takav da za sve $i$ i $j$ iz $S$ (ne nu\v{z}no razli\v{c}ite), vrijedi da $\dfrac{i+j}{(i,j)} \in S$. Na\'ci sve takve skupove $S$. Sa $(i,j)$ ozna\v{c}avamo najve\'ci zajedni\v{c}ki djelilac brojeva $i$ i $j$.
+
+    \item Data su dva \v{s}tapa, od kojih prvi ima du\v{z}inu $k$, a drugi du\v{z}inu $l$. Harun i Admir igraju sljede\'cu igru: najprije Harun razre\v{z}e prvi \v{s}tap na 3 dijela, po svojoj \v{z}elji, a zatim Admir (koji je vidio kako je Harun razrezao svoj \v{s}tap) razre\v{z}e drugi \v{s}tap na 3 dijela, tako\dj er po svojoj \v{z}elji. Ako se od novodobijenih 6 \v{s}tapova mogu konstruisati dva trougla, pobijedio je Admir, u suprotnom je pobijedio Harun. U zavisnosti od odnosa $k/l$ odrediti koji igra\v{c} ima pobjedni\v{c}ku strategiju.
+
+    \item Na horizontalnom \v{s}tapu du\v{z}ine 1 m je rasporedeno $n$ mrava, i svaki je okrenut lijevo ili desno. Svaki mrav se kre\'ce brzinom $1\frac{m}{s}$. Ako mrav do\dj e do kraja \v{s}tapa, on padne i vi\v{s}e se ne pojavljuje. Ako mrav u svom putu sretne drugog mrava, njih dva se sudare, i nastavljaju svoj put u suprotnom smjeru od onog u kojem su i\v{s}li, ali istom brzinom. Dokazati da \'ce za najvi\v{s}e jednu sekundu svi mravi sigurno pasti za \v{s}tapa.
+
+    \item Za koje prirodne brojeve $n$ mo\v{z}emo postaviti brojeve $1, 2, \ldots, n$ u vrhove pravilnog $n$--tougla, tako da za svaka tri vrha $A, B, C$ za koja vrijedi $AB = AC$, broj u vrhu $A$ bude ili manji od oba broja u vrhovima $B$ i $C$, ili ve\'ci od oba?\\
+    Napomena: Ako ste sebi postavili (filozofsko) pitanje da li je tvrdnja zadovoljena za $n = 1$ i $n = 2$, odgovor je DA. Naime, brojevi se mogu postaviti na na\v{c}in da svaka tra\v{z}ena trojka vrhova (a imamo 0 takvih trojki) zadovoljava dati uslov.
+
+    \item Dat je niz du\v{z}ine 2019 koji se sastoji od prvih 2019 prirodnih brojeva poredanih u proizvoljnom redoslijedu (svaki se pojavljuje ta\v{c}no jednom). Uo\v{c}imo prvi broj u tom nizu. Neka je to broj $k$. Od datog niza formiramo novi niz du\v{z}ine 2019 koji ima iste \v{c}lanove kao i po\v{c}etni, samo \v{s}to je prvih $k$ \v{c}lanova niza u obrnutom redoslijedu, dok ostatak niza ostaje isti. Dokazati da \'ce se ako se nastavi ovaj postupak pojaviti niz \v{c}iji je prvi element jedinica.
+
+    \item Pravougaona plo\v{c}a dimenzija $m \times n$ ($m$ je broj redova, a $n$ broj kolona) podijeljena je na $m \cdot n$ jedini\v{c}nih kvadrati\'ca. Na po\v{c}etku je u svakom kvadrati\'cu upisan po jedan cijeli broj. U jednom koraku dozvoljeno je izabrati po jedan broj iz svakog reda i pove\'cati sve izabrane brojeve za 1, ili izabrati iz svake kolone po jedan broj i smanjiti sve izabrane brojeve za 1. Da li je mogu\'ce da nakon kona\v{c}nog broja ovih koraka dobijemo plo\v{c}u tako da je u svakom kvadrati\'cu 0, bez obzira koji su brojevi na po\v{c}etku bili upisani, ako je:
+    \begin{enumerate}
+        \item[a)] $m = 15, n = 20$;
+        \item[b)] $m = 5, n = 11$?
+    \end{enumerate}
+    Za koje sve parove prirodnih brojeva $(m, n)$ je mogu\'ce dobiti plo\v{c}u tako da je u svakom kvadrati\'cu 0, bez obzira koji su brojevi na po\v{c}etku bili upisani?
+
+    \item Na\'ci maksimalan broj topova koji se mogu postaviti na \v{s}ahovsku plo\v{c}u formata $10 \times 10$, tako da me\dj u svakih 5 topova na plo\v{c}i postoje dva koja se napadaju (dva topa se napadaju ako su u istom redu ili u istoj koloni, bez obzira ima li drugih topova izme\dj u njih).
+
+    \item U plo\v{c}u $2023 \times 2023$ su upisani prirodni brojevi $1, 2, 3, \ldots, 2023^2$ u nekom redoslijedu. Vuk mo\v{z}e postaviti \v{z}eton u neko po\v{c}etno polje. U svakom potezu on mo\v{z}e pomjeriti \v{z}eton u bilo koje polje kvadrata $5 \times 5$ \v{c}iji je centar kvadrat gdje se \v{z}eton trenutno nalazi, pod uslovom da je u tom polju napisan ve\'ci broj nego u trenutnom (naravno, ne smije izlaziti van okvira plo\v{c}e). Odrediti najve\'ci prirodan broj $k$ takav da Vuk mo\v{z}e napraviti $k$ poteza neovisno od po\v{c}etnog rasporeda brojeva.\\
+    \\
+    \textbf{Napomena:} Vuk mo\v{z}e birati po\v{c}etno polje u zavisnosti od rasporeda brojeva.
+\end{enumerate}
+
+\end{document}
