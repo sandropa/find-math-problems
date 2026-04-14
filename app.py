@@ -41,10 +41,18 @@ if "pending_prompt" not in st.session_state:
     st.session_state.pending_prompt = None
 
 # ---------------------------------------------------------------------------
-# Example problem (only when no conversation yet)
+# Chat input (rendered early so we know if user typed something)
 # ---------------------------------------------------------------------------
 
-if not st.session_state.messages and not st.session_state.pending_prompt:
+chat_input = st.chat_input("Describe a problem (any language)...")
+prompt = st.session_state.pending_prompt or chat_input
+st.session_state.pending_prompt = None
+
+# ---------------------------------------------------------------------------
+# Example problem (only when no conversation yet and nothing typed)
+# ---------------------------------------------------------------------------
+
+if not st.session_state.messages and not prompt:
     with st.container(border=True):
         st.markdown(f"🎲 **Combinatorics**")
         st.markdown(EXAMPLE_PROBLEM)
@@ -59,14 +67,6 @@ if not st.session_state.messages and not st.session_state.pending_prompt:
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
-
-# ---------------------------------------------------------------------------
-# Handle pending prompt (from example card click) or typed input
-# ---------------------------------------------------------------------------
-
-chat_input = st.chat_input("Describe a problem (any language)...")
-prompt = st.session_state.pending_prompt or chat_input
-st.session_state.pending_prompt = None
 
 if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
