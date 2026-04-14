@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import streamlit as st
 
@@ -73,16 +74,53 @@ if prompt:
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        with st.spinner("Searching..."):
-            try:
-                agent = load_agent()
-                result = agent.invoke({"messages": [{"role": "user", "content": prompt}]})
-                response = result["messages"][-1].content
-            except Exception as e:
-                if "402" in str(e):
-                    response = "The search service is temporarily unavailable. Please try again later."
-                else:
-                    response = "Something went wrong while searching. Please try again."
+        response = None
+        try:
+            agent = load_agent()
+            with st.status("Searching...", expanded=True) as status:
+                for chunk in agent.stream({"messages": [{"role": "user", "content": prompt}]}):
+                    if "model" in chunk:
+                        msg = chunk["model"]["messages"][-1]
+                        tool_calls = getattr(msg, "tool_calls", None)
+                        if tool_calls:
+                            # Agent is calling tools — show what it's thinking and doing
+                            if msg.content:
+                                st.caption(msg.content)
+                            for tc in tool_calls:
+                                name = tc["name"]
+                                args = tc["args"]
+                                if name == "search_problems":
+                                    terms = args.get("terms", [])
+                                    st.markdown("🔍 " + ", ".join(f"`{t}`" for t in terms))
+                                elif name == "search_by_contest":
+                                    st.markdown(f"🏆 Contest: `{args.get('contest_name', '')}`")
+                                elif name == "get_problem_details":
+                                    st.markdown(f"📋 Reading problem **#{args.get('row_index', '')}**")
+                        elif msg.content:
+                            # Final response
+                            response = msg.content
+                    elif "tools" in chunk:
+                        msg = chunk["tools"]["messages"][-1]
+                        content = msg.content if isinstance(msg.content, str) else str(msg.content)
+                        if "No problems found" in content:
+                            st.caption("→ No matches")
+                        else:
+                            # Count result entries like [12345]
+                            matches = re.findall(r"^\[(\d+)\] (.+)$", content, re.MULTILINE)
+                            if matches:
+                                st.caption(f"→ {len(matches)} result(s)")
+                            elif content.startswith("Contest:"):
+                                # get_problem_details response — extract contest name
+                                m = re.match(r"Contest:\s*(.+)", content)
+                                if m:
+                                    st.caption(f"→ {m.group(1).strip()}")
+                status.update(label="Search complete", state="complete", expanded=False)
+        except Exception as e:
+            if "402" in str(e):
+                response = "The search service is temporarily unavailable. Please try again later."
+            else:
+                response = "Something went wrong while searching. Please try again."
 
-        st.markdown(response)
-        st.session_state.messages.append({"role": "assistant", "content": response})
+        if response:
+            st.markdown(response)
+        st.session_state.messages.append({"role": "assistant", "content": response or ""})
